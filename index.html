@@ -19,7 +19,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 35%, #1a0b2e 0%, #07020d 100%);
+      background: radial-gradient(circle at 50% 35%, #1c0b32 0%, #07020d 100%);
       font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
       touch-action: none;
     }
@@ -47,15 +47,15 @@
       padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
     }
     .text-top {
-      margin-top: 35px;
+      margin-top: 30px;
       text-align: center;
       width: 100%;
     }
     .title {
-      font-size: 26px;
+      font-size: 27px;
       font-weight: 700;
       color: #ffe6a3;
-      text-shadow: 0 0 16px rgba(255, 230, 163, 0.7), 0 0 30px rgba(255, 180, 120, 0.4);
+      text-shadow: 0 0 18px rgba(255, 230, 163, 0.75), 0 0 35px rgba(255, 180, 120, 0.45);
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity 1.8s ease, transform 1.8s ease;
@@ -66,7 +66,7 @@
       color: #f2e9fc;
       text-shadow: 0 0 12px rgba(242, 233, 252, 0.6);
       opacity: 0;
-      margin-top: 10px;
+      margin-top: 8px;
       transform: translateY(-6px);
       transition: opacity 1.8s ease, transform 1.8s ease;
       letter-spacing: 0.5px;
@@ -76,13 +76,13 @@
       color: #ffc4d6;
       text-shadow: 0 0 14px rgba(255, 196, 214, 0.7);
       opacity: 0;
-      margin-top: 10px;
+      margin-top: 8px;
       font-weight: 600;
       transform: translateY(-6px);
       transition: opacity 1.8s ease, transform 1.8s ease;
     }
     .text-bottom {
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       text-align: center;
       width: 100%;
       display: flex;
@@ -96,7 +96,7 @@
       min-height: 24px;
       opacity: 0;
       transition: opacity 0.8s ease;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       padding: 0 15px;
       line-height: 1.5;
     }
@@ -106,14 +106,14 @@
       letter-spacing: 1px;
       opacity: 0;
       transition: opacity 1.2s ease;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     .replay-btn {
       pointer-events: auto;
       background: rgba(35, 18, 50, 0.6);
       border: 1px solid rgba(255, 220, 150, 0.7);
       color: #ffeedb;
-      padding: 8px 22px;
+      padding: 8px 24px;
       border-radius: 20px;
       font-size: 13px;
       cursor: pointer;
@@ -220,7 +220,6 @@
     let height = window.innerHeight;
     let dpr = window.devicePixelRatio || 1;
 
-    // 預載女友照片
     const loadedImages = [];
     CONFIG.photoUrls.forEach(url => {
       const img = new Image();
@@ -228,11 +227,9 @@
       img.onload = () => loadedImages.push(img);
     });
 
-    // 避免重複：洗牌輪播卡池 (Shuffled Photo Pool)
     let photoIndexQueue = [];
     function getNextPhotoIndex() {
       if (photoIndexQueue.length === 0) {
-        // 重新填滿 0 ~ 4 並隨機洗牌
         const indices = [0, 1, 2, 3, 4];
         for (let i = indices.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -254,7 +251,6 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 緩動函數
     function easeOutCubic(t) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3); }
     function easeOutBack(t, s = 1.2) {
       t = Math.max(0, Math.min(1, t));
@@ -262,7 +258,7 @@
     }
 
     /* ========================================================
-       4. 拍立得照片掉落粒子 (速度適度加快 + 輪播均勻防重複)
+       4. 拍立得照片掉落粒子 (背景層)
        ======================================================== */
     class FloatingPhoto {
       constructor(slotIndex, totalSlots) {
@@ -274,17 +270,15 @@
       reset(isInitial = false) {
         this.photoIdx = getNextPhotoIndex();
         
-        const baseWidth = Math.min(width, height) * (0.24 + Math.random() * 0.06);
+        const baseWidth = Math.min(width, height) * (0.24 + Math.random() * 0.05);
         this.w = baseWidth;
         this.h = baseWidth * 1.26;
 
-        // 水平分區，避免照片擠在同一個位置
         const laneWidth = width / this.totalSlots;
         const laneX = this.slotIndex * laneWidth;
         this.x = laneX + Math.random() * (laneWidth - this.w * 0.7);
         this.x = Math.max(10, Math.min(width - this.w - 10, this.x));
 
-        // 垂直交錯分佈，初次啟動時均勻分散在各高度
         if (isInitial) {
           const stepY = height / this.totalSlots;
           this.y = this.slotIndex * stepY - Math.random() * 80;
@@ -292,7 +286,6 @@
           this.y = -this.h - (Math.random() * 80);
         }
 
-        // 速度調整：加快一點點 (約 42 ~ 65 px/s，更生動順暢)
         this.vy = 42 + Math.random() * 24;
         this.vx = (Math.random() - 0.5) * 8;
 
@@ -311,7 +304,6 @@
         this.y += this.vy * dt;
         this.angle += this.angVel * dt;
 
-        // 掉落出底部後重置到頂端 (換下一張不同照片)
         if (this.y > height + 50) {
           this.reset(false);
         }
@@ -332,12 +324,10 @@
         ctx.rotate(this.angle);
         ctx.globalAlpha = this.opacity;
 
-        // 柔和外陰影與微光
         ctx.shadowColor = 'rgba(255, 215, 180, 0.38)';
         ctx.shadowBlur = 15;
         ctx.shadowOffsetY = 6;
 
-        // 拍立得相框
         ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
         const padX = this.w * 0.07;
         const padTop = this.w * 0.07;
@@ -350,7 +340,6 @@
 
         ctx.shadowColor = 'transparent';
 
-        // 繪製照片
         ctx.save();
         ctx.beginPath();
         this._roundRect(ctx, -this.w / 2 + padX, -this.h / 2 + padTop, photoW, photoH, 4);
@@ -374,7 +363,6 @@
         ctx.drawImage(img, sx, sy, sWidth, sHeight, -this.w / 2 + padX, -this.h / 2 + padTop, photoW, photoH);
         ctx.restore();
 
-        // 底部愛心手寫字
         ctx.fillStyle = 'rgba(235, 80, 115, 0.8)';
         ctx.font = `bold ${Math.max(9, this.w * 0.11)}px -apple-system, sans-serif`;
         ctx.textAlign = 'center';
@@ -424,7 +412,7 @@
       }
       initPhotos() {
         this.photos = [];
-        const photoCount = 5; // 5 張照片各配置一個均勻通道
+        const photoCount = 5;
         for (let i = 0; i < photoCount; i++) {
           this.photos.push(new FloatingPhoto(i, photoCount));
         }
@@ -432,13 +420,13 @@
       spawnSparkles(x, y, count = 15) {
         for (let i = 0; i < count; i++) {
           this.sparkles.push({
-            x: x + (Math.random() - 0.5) * 30,
-            y: y + (Math.random() - 0.5) * 30,
-            vx: (Math.random() - 0.5) * 60,
-            vy: -20 - Math.random() * 60,
-            size: 2 + Math.random() * 3,
+            x: x + (Math.random() - 0.5) * 35,
+            y: y + (Math.random() - 0.5) * 35,
+            vx: (Math.random() - 0.5) * 70,
+            vy: -25 - Math.random() * 70,
+            size: 2.5 + Math.random() * 3.5,
             life: 1.0,
-            decay: 0.4 + Math.random() * 0.4,
+            decay: 0.35 + Math.random() * 0.35,
             color: Math.random() > 0.5 ? '#ffe89c' : '#ffc4d6'
           });
         }
@@ -446,20 +434,20 @@
       spawnPetal(x, y, count = 1) {
         for (let i = 0; i < count; i++) {
           this.petals.push({
-            x: x + (Math.random() - 0.5) * 40,
-            y: y + (Math.random() - 0.5) * 30,
-            vx: (Math.random() - 0.5) * 20,
-            vy: 25 + Math.random() * 45,
-            w: 12 + Math.random() * 6,
-            h: 16 + Math.random() * 8,
+            x: x + (Math.random() - 0.5) * 60,
+            y: y + (Math.random() - 0.5) * 40,
+            vx: (Math.random() - 0.5) * 25,
+            vy: 25 + Math.random() * 50,
+            w: 14 + Math.random() * 8,
+            h: 18 + Math.random() * 10,
             angle: Math.random() * Math.PI * 2,
             angVel: (Math.random() - 0.5) * 2.5,
             swaySpeed: 1.5 + Math.random() * 1.5,
-            swayAmp: 25 + Math.random() * 25,
+            swayAmp: 28 + Math.random() * 30,
             swayPhase: Math.random() * Math.PI * 2,
-            color: Math.random() > 0.4 ? 'rgba(235, 38, 72, ' : 'rgba(255, 160, 185, ',
+            color: Math.random() > 0.4 ? 'rgba(235, 30, 68, ' : 'rgba(255, 140, 175, ',
             life: 1.0,
-            decay: 0.05 + Math.random() * 0.04
+            decay: 0.04 + Math.random() * 0.04
           });
         }
       }
@@ -483,10 +471,10 @@
           p.angle += p.angVel * dt;
           p.life -= p.decay * dt;
         });
-        this.petals = this.petals.filter(p => p.life > 0 && p.y < height + 50);
+        this.petals = this.petals.filter(p => p.life > 0 && p.y < height + 60);
 
-        if (allowAmbient && this.petals.length < 18 && Math.random() < 0.04) {
-          this.spawnPetal(bCenter.x + (Math.random() - 0.5) * 160, bCenter.y - 40);
+        if (allowAmbient && this.petals.length < 24 && Math.random() < 0.05) {
+          this.spawnPetal(bCenter.x + (Math.random() - 0.5) * 200, bCenter.y - 60);
         }
       }
       renderBackground(ctx, time) {
@@ -522,7 +510,7 @@
     }
 
     /* ========================================================
-       6. 花卉幾何模型
+       6. 豪華花卉幾何模型
        ======================================================== */
     class Flower {
       constructor(opts) {
@@ -536,6 +524,7 @@
         this.scale = opts.scale || 1.0;
         this.color = opts.color || '#e62b4a';
         this.coreColor = opts.coreColor || '#8a0d24';
+        this.isHero = opts.isHero || false;
 
         this.stemProg = 0;
         this.bloomProg = 0;
@@ -558,7 +547,7 @@
           this.stemProg = 1.0;
           const bT = localT - this.stemDur;
           if (bT <= this.bloomDur) {
-            this.bloomProg = easeOutBack(bT / this.bloomDur, 1.2);
+            this.bloomProg = easeOutBack(bT / this.bloomDur, 1.25);
             this.isBlooming = true;
             this.isComplete = false;
           } else {
@@ -580,8 +569,9 @@
         const head = this.getHeadPos();
         const sway = Math.sin(timeElapsed * 1.2 + this.swayPhase) * (2.2 * Math.PI / 180);
 
+        // 花莖 (根部深藏於包裝紙內部)
         ctx.strokeStyle = '#2d5c38';
-        ctx.lineWidth = 2.4 * this.scale;
+        ctx.lineWidth = (this.isHero ? 3.4 : 2.6) * this.scale;
         ctx.beginPath();
         const p0 = this.start, p1 = this.ctrl;
         ctx.moveTo(p0.x, p0.y);
@@ -616,78 +606,96 @@
       renderRose(ctx, s) {
         if (!this.isBlooming) {
           ctx.fillStyle = '#2d5c38';
-          ctx.beginPath(); ctx.ellipse(0, -4 * this.stemProg, 6, 12, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(0, -6 * this.stemProg, 8, 16, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = this.coreColor;
+          ctx.beginPath(); ctx.ellipse(0, 2 * this.stemProg, 6, 10, 0, 0, Math.PI * 2); ctx.fill();
           return;
         }
+
         ctx.fillStyle = this.color;
-        for (let i = 0; i < 5; i++) {
+        const outerCount = this.isHero ? 6 : 5;
+        for (let i = 0; i < outerCount; i++) {
           ctx.save();
-          ctx.rotate((Math.PI * 2 / 5) * i + this.bloomProg * 0.2);
+          ctx.rotate((Math.PI * 2 / outerCount) * i + this.bloomProg * 0.22);
           ctx.beginPath();
-          ctx.ellipse(0, 14 * s, 13 * s, 16 * s, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, 18 * s, 17 * s, 21 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.beginPath();
+          ctx.ellipse(0, 22 * s, 13 * s, 14 * s, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
+
         ctx.fillStyle = this.color;
         for (let i = 0; i < 5; i++) {
           ctx.save();
-          ctx.rotate((Math.PI * 2 / 5) * i + Math.PI / 5 - this.bloomProg * 0.15);
+          ctx.rotate((Math.PI * 2 / 5) * i + Math.PI / 5 - this.bloomProg * 0.16);
           ctx.beginPath();
-          ctx.ellipse(0, 8 * s, 10 * s, 13 * s, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, 11 * s, 13 * s, 17 * s, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
+
         ctx.fillStyle = this.coreColor;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 5; i++) {
           ctx.save();
-          ctx.rotate(i * 1.1 + this.bloomProg * 0.3);
+          ctx.rotate(i * 1.05 + this.bloomProg * 0.3);
           ctx.beginPath();
-          ctx.ellipse(0, 2 * s, 7 * s * (1 - i * 0.15), 9 * s * (1 - i * 0.15), 0, 0, Math.PI * 2);
+          ctx.ellipse(0, 3 * s, 9 * s * (1 - i * 0.14), 12 * s * (1 - i * 0.14), 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
+
+        ctx.fillStyle = 'rgba(60, 5, 15, 0.95)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4.5 * s, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       renderTulip(ctx, s) {
         if (!this.isBlooming) return;
         ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.ellipse(0, 6 * s, 10 * s, 18 * s, 0, 0, Math.PI * 2); ctx.fill();
-        const spread = 0.1 + this.bloomProg * 0.25;
+        ctx.beginPath(); ctx.ellipse(0, 8 * s, 13 * s, 24 * s, 0, 0, Math.PI * 2); ctx.fill();
+        const spread = 0.12 + this.bloomProg * 0.28;
         ctx.save(); ctx.rotate(-spread);
-        ctx.beginPath(); ctx.ellipse(-8 * s, 4 * s, 9 * s, 19 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-10 * s, 5 * s, 12 * s, 25 * s, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         ctx.save(); ctx.rotate(spread);
-        ctx.beginPath(); ctx.ellipse(8 * s, 4 * s, 9 * s, 19 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(10 * s, 5 * s, 12 * s, 25 * s, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.ellipse(0, 0, 11 * s, 17 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, 14 * s, 22 * s, 0, 0, Math.PI * 2); ctx.fill();
       }
 
       renderDaisy(ctx, s) {
         if (!this.isBlooming) return;
         ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < 14; i++) {
+        for (let i = 0; i < 15; i++) {
           ctx.save();
-          ctx.rotate((Math.PI * 2 / 14) * i + this.bloomProg * 0.2);
+          ctx.rotate((Math.PI * 2 / 15) * i + this.bloomProg * 0.2);
           ctx.beginPath();
-          ctx.ellipse(0, 12 * s, 3.5 * s, 11 * s, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, 15 * s, 4.5 * s, 14 * s, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
         ctx.fillStyle = '#ffc83b';
-        ctx.beginPath(); ctx.arc(0, 0, 7 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 9 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffe57a';
+        ctx.beginPath(); ctx.arc(0, 0, 5 * s, 0, Math.PI * 2); ctx.fill();
       }
 
       renderBabysBreath(ctx, s, time) {
         if (!this.isBlooming) return;
         const florets = [
-          { x: 0, y: 16, c: '#fff7eb' }, { x: -14, y: 26, c: '#ffcde0' },
-          { x: 14, y: 24, c: '#fff7eb' }, { x: -24, y: 38, c: '#fff7eb' },
-          { x: 24, y: 36, c: '#ffcde0' }, { x: 0, y: 55, c: '#fff7eb' },
-          { x: -16, y: 50, c: '#ffcde0' }, { x: 16, y: 52, c: '#fff7eb' }
+          { x: 0, y: 18, c: '#fff7eb' }, { x: -18, y: 30, c: '#ffcde0' },
+          { x: 18, y: 28, c: '#fff7eb' }, { x: -32, y: 46, c: '#fff7eb' },
+          { x: 32, y: 44, c: '#ffcde0' }, { x: 0, y: 68, c: '#fff7eb' },
+          { x: -20, y: 62, c: '#ffcde0' }, { x: 22, y: 64, c: '#fff7eb' },
+          { x: -10, y: 82, c: '#fff7eb' }, { x: 12, y: 84, c: '#ffcde0' }
         ];
         ctx.strokeStyle = '#3d6e4a';
-        ctx.lineWidth = 1.2 * s;
+        ctx.lineWidth = 1.4 * s;
         florets.forEach(f => {
           ctx.beginPath();
           ctx.moveTo(0, 0);
@@ -697,7 +705,7 @@
           const twinkle = 0.85 + 0.25 * Math.sin(time * 3 + f.x);
           ctx.fillStyle = f.c;
           ctx.beginPath();
-          ctx.arc(f.x * s, f.y * s, 4 * s * twinkle, 0, Math.PI * 2);
+          ctx.arc(f.x * s, f.y * s, 5 * s * twinkle, 0, Math.PI * 2);
           ctx.fill();
         });
       }
@@ -705,17 +713,19 @@
       renderFoliage(ctx, s) {
         if (!this.isBlooming) return;
         ctx.fillStyle = '#497c55';
-        ctx.beginPath(); ctx.ellipse(0, 0, 8 * s, 14 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, 11 * s, 20 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.beginPath(); ctx.ellipse(-2 * s, 2 * s, 5 * s, 12 * s, 0, 0, Math.PI * 2); ctx.fill();
       }
     }
 
     /* ========================================================
-       7. 主舞台邏輯
+       7. 豪華大花束編排 (花莖生於花束包裝內部)
        ======================================================== */
     const particles = new ParticleSystem();
     let flowers = [];
     let startTime = null;
-    let bouquetCenter = { x: width / 2, y: height * 0.55 };
+    let bouquetCenter = { x: width / 2, y: height * 0.50 };
     let isBouquetComplete = false;
     let textSequenceStarted = false;
     let secretIndex = 0;
@@ -723,102 +733,240 @@
     function buildBouquet() {
       flowers = [];
       const bx = width / 2;
-      const by = height * 0.78;
-      const s = Math.min(width / 420, height / 750);
-      bouquetCenter = { x: bx, y: by - 240 * s };
+      const by = height * 0.77; // 花束腰身收攏處
+      const s = Math.min(width / 390, height / 700) * 1.25;
+      bouquetCenter = { x: bx, y: by - 250 * s };
 
+      // 後景綠葉
       flowers.push(new Flower({
-        type: 'rose', start: { x: bx, y: by }, target: { x: bx, y: by - 240 * s },
-        ctrl: { x: bx - 15 * s, y: by - 120 * s }, delay: 1.2, stemDur: 2.2, bloomDur: 2.6,
-        scale: 1.2 * s, color: '#e62445', coreColor: '#8a0d24'
-      }));
-
-      flowers.unshift(new Flower({
-        type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 110 * s, y: by - 250 * s },
-        ctrl: { x: bx - 80 * s, y: by - 100 * s }, delay: 4.8, scale: 1.0 * s
-      }));
-      flowers.unshift(new Flower({
-        type: 'foliage', start: { x: bx, y: by }, target: { x: bx + 115 * s, y: by - 245 * s },
-        ctrl: { x: bx + 80 * s, y: by - 100 * s }, delay: 5.0, scale: 1.0 * s
-      }));
-
-      flowers.push(new Flower({
-        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx - 90 * s, y: by - 290 * s },
-        ctrl: { x: bx - 60 * s, y: by - 140 * s }, delay: 5.4, scale: 0.95 * s
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 145 * s, y: by - 260 * s },
+        ctrl: { x: bx - 105 * s, y: by - 110 * s }, delay: 4.6, scale: 1.15 * s
       }));
       flowers.push(new Flower({
-        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx + 95 * s, y: by - 285 * s },
-        ctrl: { x: bx + 65 * s, y: by - 140 * s }, delay: 5.8, scale: 0.95 * s
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx + 150 * s, y: by - 255 * s },
+        ctrl: { x: bx + 110 * s, y: by - 105 * s }, delay: 4.8, scale: 1.15 * s
+      }));
+      flowers.push(new Flower({
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 120 * s, y: by - 310 * s },
+        ctrl: { x: bx - 85 * s, y: by - 140 * s }, delay: 5.0, scale: 1.1 * s
+      }));
+      flowers.push(new Flower({
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx + 125 * s, y: by - 305 * s },
+        ctrl: { x: bx + 90 * s, y: by - 135 * s }, delay: 5.2, scale: 1.1 * s
       }));
 
+      // 滿天星
       flowers.push(new Flower({
-        type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 55 * s, y: by - 300 * s },
-        ctrl: { x: bx - 35 * s, y: by - 150 * s }, delay: 6.2, scale: 1.05 * s, color: '#ff6b5e'
+        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx - 110 * s, y: by - 350 * s },
+        ctrl: { x: bx - 75 * s, y: by - 160 * s }, delay: 5.5, scale: 1.05 * s
       }));
       flowers.push(new Flower({
-        type: 'tulip', start: { x: bx, y: by }, target: { x: bx + 55 * s, y: by - 290 * s },
-        ctrl: { x: bx + 35 * s, y: by - 150 * s }, delay: 6.6, scale: 1.0 * s, color: '#ffd65c'
-      }));
-
-      flowers.push(new Flower({
-        type: 'daisy', start: { x: bx, y: by }, target: { x: bx - 75 * s, y: by - 195 * s },
-        ctrl: { x: bx - 45 * s, y: by - 90 * s }, delay: 7.0, scale: 0.95 * s
+        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx + 115 * s, y: by - 345 * s },
+        ctrl: { x: bx + 80 * s, y: by - 155 * s }, delay: 5.8, scale: 1.05 * s
       }));
       flowers.push(new Flower({
-        type: 'daisy', start: { x: bx, y: by }, target: { x: bx + 80 * s, y: by - 205 * s },
-        ctrl: { x: bx + 50 * s, y: by - 95 * s }, delay: 7.4, scale: 0.95 * s
+        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx, y: by - 375 * s },
+        ctrl: { x: bx - 10 * s, y: by - 180 * s }, delay: 6.1, scale: 1.1 * s
       }));
 
+      // 鬱金香
       flowers.push(new Flower({
-        type: 'rose', start: { x: bx, y: by }, target: { x: bx - 38 * s, y: by - 170 * s },
-        ctrl: { x: bx - 20 * s, y: by - 80 * s }, delay: 7.8, scale: 1.0 * s,
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 70 * s, y: by - 335 * s },
+        ctrl: { x: bx - 45 * s, y: by - 165 * s }, delay: 6.4, scale: 1.15 * s, color: '#ff6252'
+      }));
+      flowers.push(new Flower({
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx + 75 * s, y: by - 330 * s },
+        ctrl: { x: bx + 50 * s, y: by - 160 * s }, delay: 6.7, scale: 1.12 * s, color: '#ffdb5c'
+      }));
+      flowers.push(new Flower({
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 35 * s, y: by - 305 * s },
+        ctrl: { x: bx - 20 * s, y: by - 150 * s }, delay: 7.0, scale: 1.1 * s, color: '#ffa07a'
+      }));
+      flowers.push(new Flower({
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx + 40 * s, y: by - 300 * s },
+        ctrl: { x: bx + 25 * s, y: by - 145 * s }, delay: 7.2, scale: 1.1 * s, color: '#ff758f'
+      }));
+
+      // 雛菊
+      flowers.push(new Flower({
+        type: 'daisy', start: { x: bx, y: by }, target: { x: bx - 95 * s, y: by - 230 * s },
+        ctrl: { x: bx - 60 * s, y: by - 110 * s }, delay: 7.5, scale: 1.08 * s
+      }));
+      flowers.push(new Flower({
+        type: 'daisy', start: { x: bx, y: by }, target: { x: bx + 100 * s, y: by - 240 * s },
+        ctrl: { x: bx + 65 * s, y: by - 115 * s }, delay: 7.8, scale: 1.08 * s
+      }));
+
+      // 兩朵伴生紅玫瑰
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx - 42 * s, y: by - 250 * s },
+        ctrl: { x: bx - 25 * s, y: by - 120 * s }, delay: 8.1, scale: 1.25 * s,
+        color: '#dc1c3b', coreColor: '#7a081d'
+      }));
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx + 45 * s, y: by - 245 * s },
+        ctrl: { x: bx + 30 * s, y: by - 115 * s }, delay: 8.4, scale: 1.25 * s,
+        color: '#dc1c3b', coreColor: '#7a081d'
+      }));
+
+      // 前景玫瑰
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx - 55 * s, y: by - 180 * s },
+        ctrl: { x: bx - 30 * s, y: by - 85 * s }, delay: 8.7, scale: 1.15 * s,
         color: '#ff8ca8', coreColor: '#c93c66'
       }));
       flowers.push(new Flower({
-        type: 'rose', start: { x: bx, y: by }, target: { x: bx + 40 * s, y: by - 165 * s },
-        ctrl: { x: bx + 25 * s, y: by - 80 * s }, delay: 8.2, scale: 1.0 * s,
-        color: '#ffc9ba', coreColor: '#cf7563'
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx + 58 * s, y: by - 175 * s },
+        ctrl: { x: bx + 35 * s, y: by - 80 * s }, delay: 9.0, scale: 1.15 * s,
+        color: '#ffd0c2', coreColor: '#d67562'
+      }));
+
+      // 主花大紅玫瑰
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx, y: by - 240 * s },
+        ctrl: { x: bx - 15 * s, y: by - 120 * s }, delay: 1.2, stemDur: 2.2, bloomDur: 2.7,
+        scale: 1.55 * s, color: '#e61e40', coreColor: '#8a051c', isHero: true
       }));
     }
 
     function renderGlow(time, alpha) {
-      const grad = ctx.createRadialGradient(bouquetCenter.x, bouquetCenter.y, 10, bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.45);
-      const breath = 1.0 + 0.12 * Math.sin(time * 1.5);
-      grad.addColorStop(0, `rgba(255, 200, 220, ${0.35 * alpha * breath})`);
-      grad.addColorStop(0.5, `rgba(220, 150, 240, ${0.15 * alpha * breath})`);
+      const grad = ctx.createRadialGradient(bouquetCenter.x, bouquetCenter.y, 10, bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.55);
+      const breath = 1.0 + 0.14 * Math.sin(time * 1.5);
+      grad.addColorStop(0, `rgba(255, 190, 220, ${0.42 * alpha * breath})`);
+      grad.addColorStop(0.4, `rgba(220, 140, 240, ${0.20 * alpha * breath})`);
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.45, 0, Math.PI * 2);
+      ctx.arc(bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.55, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    function renderWrapping(s, alpha) {
+    /* ========================================================
+       8. 精緻法式/韓式立體花束包裝紙 (Multi-Layered Bouquet Wrapping)
+       ======================================================== */
+    function renderBackWrapping(s, alpha) {
       const bx = width / 2;
-      const by = height * 0.78;
+      const by = height * 0.77;
       ctx.save();
-      ctx.fillStyle = `rgba(245, 210, 140, ${alpha * 0.95})`;
+
+      // 1. 後層大扇形霧面花束紙 (深霧灰紫，襯托花群)
+      ctx.fillStyle = `rgba(28, 14, 38, ${alpha * 0.88})`;
       ctx.beginPath();
-      ctx.ellipse(bx - 22 * s, by + 25 * s, 18 * s, 13 * s, 0, 0, Math.PI * 2);
-      ctx.ellipse(bx + 22 * s, by + 25 * s, 18 * s, 13 * s, 0, 0, Math.PI * 2);
+      ctx.moveTo(bx - 175 * s, by - 180 * s);
+      ctx.lineTo(bx - 140 * s, by - 320 * s);
+      ctx.lineTo(bx - 40 * s, by - 370 * s);
+      ctx.lineTo(bx + 40 * s, by - 370 * s);
+      ctx.lineTo(bx + 140 * s, by - 320 * s);
+      ctx.lineTo(bx + 175 * s, by - 180 * s);
+      ctx.lineTo(bx + 45 * s, by);
+      ctx.lineTo(bx - 45 * s, by);
+      ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = `rgba(255, 230, 160, ${alpha})`;
+
+      // 2. 內層雪梨紙/白棉紙蕾絲邊緣 (French White Tissue Trim)
+      ctx.strokeStyle = `rgba(255, 240, 245, ${alpha * 0.45})`;
+      ctx.lineWidth = 2.0 * s;
       ctx.beginPath();
-      ctx.arc(bx, by + 25 * s, 10 * s, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(245, 210, 140, ${alpha * 0.85})`;
-      ctx.lineWidth = 3.0 * s;
-      ctx.beginPath();
-      ctx.moveTo(bx - 5 * s, by + 25 * s);
-      ctx.quadraticCurveTo(bx - 18 * s, by + 50 * s, bx - 22 * s, by + 75 * s);
-      ctx.moveTo(bx + 5 * s, by + 25 * s);
-      ctx.quadraticCurveTo(bx + 18 * s, by + 50 * s, bx + 22 * s, by + 75 * s);
+      ctx.moveTo(bx - 165 * s, by - 170 * s);
+      ctx.lineTo(bx - 132 * s, by - 305 * s);
+      ctx.lineTo(bx - 35 * s, by - 355 * s);
+      ctx.lineTo(bx + 35 * s, by - 355 * s);
+      ctx.lineTo(bx + 132 * s, by - 305 * s);
+      ctx.lineTo(bx + 165 * s, by - 170 * s);
       ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function renderFrontWrapping(s, alpha) {
+      const bx = width / 2;
+      const by = height * 0.77;
+      ctx.save();
+
+      // 1. 下半部錐形手握手柄包裝 (Tapered Bouquet Stem Wrap)
+      ctx.fillStyle = `rgba(22, 10, 30, ${alpha * 0.95})`;
+      ctx.beginPath();
+      ctx.moveTo(bx - 42 * s, by - 5 * s);
+      ctx.lineTo(bx - 26 * s, by + 120 * s);
+      ctx.quadraticCurveTo(bx, by + 135 * s, bx + 26 * s, by + 120 * s);
+      ctx.lineTo(bx + 42 * s, by - 5 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      // 手柄精緻陰影褶皺線
+      ctx.strokeStyle = `rgba(255, 220, 180, ${alpha * 0.25})`;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(bx - 8 * s, by + 10 * s);
+      ctx.lineTo(bx - 4 * s, by + 115 * s);
+      ctx.moveTo(bx + 8 * s, by + 10 * s);
+      ctx.lineTo(bx + 4 * s, by + 115 * s);
+      ctx.stroke();
+
+      // 2. 前層立體交叉斜角包裝紙 (Korean Style Overlapping Flaps)
+      // 左摺角
+      ctx.fillStyle = `rgba(38, 20, 52, ${alpha * 0.92})`;
+      ctx.beginPath();
+      ctx.moveTo(bx - 145 * s, by - 100 * s);
+      ctx.lineTo(bx - 110 * s, by + 10 * s);
+      ctx.lineTo(bx + 15 * s, by + 30 * s);
+      ctx.lineTo(bx - 30 * s, by - 70 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      // 右摺角 (覆蓋於左摺角上，形成立體交疊感)
+      ctx.fillStyle = `rgba(48, 26, 65, ${alpha * 0.95})`;
+      ctx.beginPath();
+      ctx.moveTo(bx + 145 * s, by - 100 * s);
+      ctx.lineTo(bx + 110 * s, by + 10 * s);
+      ctx.lineTo(bx - 25 * s, by + 30 * s);
+      ctx.lineTo(bx + 25 * s, by - 70 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      // 包裝紙精美金邊輪廓線
+      ctx.strokeStyle = `rgba(245, 215, 160, ${alpha * 0.55})`;
+      ctx.lineWidth = 1.8 * s;
+      ctx.beginPath();
+      ctx.moveTo(bx - 145 * s, by - 100 * s);
+      ctx.lineTo(bx + 15 * s, by + 30 * s);
+      ctx.moveTo(bx + 145 * s, by - 100 * s);
+      ctx.lineTo(bx - 25 * s, by + 30 * s);
+      ctx.stroke();
+
+      // 3. 金絲緞帶蝴蝶結 (Satin Gold Ribbon Bow)
+      const knotY = by + 20 * s;
+      ctx.fillStyle = `rgba(250, 215, 140, ${alpha * 0.96})`;
+      // 蝴蝶結左環
+      ctx.beginPath();
+      ctx.ellipse(bx - 28 * s, knotY - 4 * s, 24 * s, 16 * s, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // 蝴蝶結右環
+      ctx.beginPath();
+      ctx.ellipse(bx + 28 * s, knotY - 4 * s, 24 * s, 16 * s, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 蝴蝶結中央金球結
+      ctx.fillStyle = `rgba(255, 235, 175, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(bx, knotY, 13 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 飄逸垂落金絲緞帶 (Flowing Ribbons)
+      ctx.strokeStyle = `rgba(245, 215, 140, ${alpha * 0.9})`;
+      ctx.lineWidth = 3.8 * s;
+      ctx.beginPath();
+      ctx.moveTo(bx - 6 * s, knotY + 5 * s);
+      ctx.bezierCurveTo(bx - 25 * s, knotY + 45 * s, bx - 10 * s, knotY + 85 * s, bx - 32 * s, knotY + 135 * s);
+      ctx.moveTo(bx + 6 * s, knotY + 5 * s);
+      ctx.bezierCurveTo(bx + 25 * s, knotY + 45 * s, bx + 10 * s, knotY + 85 * s, bx + 32 * s, knotY + 135 * s);
+      ctx.stroke();
+
       ctx.restore();
     }
 
     /* ========================================================
-       8. 動畫迴圈
+       9. 動畫迴圈
        ======================================================== */
     let lastTime = performance.now();
     function animate(now) {
@@ -829,14 +977,24 @@
 
       ctx.clearRect(0, 0, width, height);
 
+      // 1. 背景層：星光與飄落回憶照片
       particles.update(dt, timeElapsed, isBouquetComplete, bouquetCenter);
       particles.renderBackground(ctx, timeElapsed);
 
+      // 2. 呼吸光暈
       if (timeElapsed > 1.2) {
         const glowAlpha = Math.min(1.0, (timeElapsed - 1.2) * 0.25);
         renderGlow(timeElapsed, glowAlpha);
       }
 
+      const s = Math.min(width / 390, height / 700) * 1.25;
+
+      // 3. 後層花束包裝紙 (在花朵背後優雅展開)
+      if (timeElapsed > 1.8) {
+        renderBackWrapping(s, Math.min(1.0, (timeElapsed - 1.8) * 0.6));
+      }
+
+      // 4. 花朵生長與綻放
       let allDone = true;
       flowers.forEach(f => {
         f.update(timeElapsed, timeElapsed);
@@ -844,20 +1002,22 @@
           f.soundPlayed = true;
           playCelestaChime();
           const head = f.getHeadPos();
-          particles.spawnSparkles(head.x, head.y, 14);
+          particles.spawnSparkles(head.x, head.y, 16);
         }
         if (!f.isComplete) allDone = false;
         f.render(ctx, timeElapsed);
       });
 
-      const s = Math.min(width / 420, height / 750);
-      if (timeElapsed > 3.2) {
-        renderWrapping(s, Math.min(1.0, (timeElapsed - 3.2) * 0.5));
+      // 5. 前層立體交叉包裝紙與金色緞帶蝴蝶結 (將花束根部完全包覆)
+      if (timeElapsed > 2.2) {
+        renderFrontWrapping(s, Math.min(1.0, (timeElapsed - 2.2) * 0.7));
       }
 
-      isBouquetComplete = allDone && timeElapsed > 10.0;
+      // 6. 前景粒子：花開微光與飄落花瓣
+      isBouquetComplete = allDone && timeElapsed > 10.5;
       particles.renderForeground(ctx, timeElapsed);
 
+      // 7. 文字觸發
       if (isBouquetComplete && !textSequenceStarted) {
         textSequenceStarted = true;
         startTextSequence();
@@ -879,12 +1039,12 @@
     }
 
     /* ========================================================
-       9. 觸碰互動與彩蛋
+       10. 觸碰互動與彩蛋
        ======================================================== */
     function handleTouch(x, y) {
       initAudio();
-      particles.spawnSparkles(x, y, 30);
-      particles.spawnPetal(x, y, 12);
+      particles.spawnSparkles(x, y, 35);
+      particles.spawnPetal(x, y, 16);
       playCelestaChime();
 
       const secEl = document.getElementById('secret-message');
