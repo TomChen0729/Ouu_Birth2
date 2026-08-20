@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Bloom for You 🌸</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, #180a29 0%, #08030f 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+    #ui-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
+    }
+    .text-top {
+      margin-top: 35px;
+      text-align: center;
+      width: 100%;
+    }
+    .title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffe6a3;
+      text-shadow: 0 0 16px rgba(255, 230, 163, 0.7), 0 0 30px rgba(255, 180, 120, 0.4);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #f2e9fc;
+      text-shadow: 0 0 12px rgba(242, 233, 252, 0.6);
+      opacity: 0;
+      margin-top: 10px;
+      transform: translateY(-6px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+      letter-spacing: 0.5px;
+    }
+    .final-line {
+      font-size: 16px;
+      color: #ffc4d6;
+      text-shadow: 0 0 14px rgba(255, 196, 214, 0.7);
+      opacity: 0;
+      margin-top: 10px;
+      font-weight: 600;
+      transform: translateY(-6px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+    }
+    .text-bottom {
+      margin-bottom: 25px;
+      text-align: center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .secret-message {
+      font-size: 15px;
+      color: #ffe6a3;
+      text-shadow: 0 0 15px rgba(255, 230, 163, 0.8);
+      min-height: 24px;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      margin-bottom: 12px;
+      padding: 0 15px;
+      line-height: 1.5;
+    }
+    .hint {
+      font-size: 12px;
+      color: rgba(220, 205, 240, 0.65);
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      margin-bottom: 15px;
+    }
+    .replay-btn {
+      pointer-events: auto;
+      background: rgba(35, 18, 50, 0.6);
+      border: 1px solid rgba(255, 220, 150, 0.7);
+      color: #ffeedb;
+      padding: 8px 22px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      opacity: 0;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: opacity 1.2s ease, transform 0.2s ease, background 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .replay-btn:active {
+      transform: scale(0.95);
+      background: rgba(60, 30, 85, 0.8);
+    }
+    .visible {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="stage"></canvas>
+
+  <div id="ui-container">
+    <div class="text-top">
+      <div id="title" class="title">Happy Birthday ❤️</div>
+      <div id="subtitle" class="subtitle">願你的每一天，都像今天一樣閃閃發光。</div>
+      <div id="final-line" class="final-line">生日快樂，我最喜歡的女孩。</div>
+    </div>
+
+    <div class="text-bottom">
+      <div id="secret-message" class="secret-message"></div>
+      <div id="hint" class="hint">✨ 輕觸螢幕花束收下心意 ✨</div>
+      <button id="replay-btn" class="replay-btn">再看一次 ↺</button>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+       1. 個人化設定 (與 Python 版完全同步)
+       ======================================================== */
+    const CONFIG = {
+      girlfriendName: "Ouu",
+      birthdayMessages: [
+        "Happy Birthday ❤️",
+        "願你的每一天，都像今天一樣閃閃發光。",
+        "生日快樂，我最喜歡的 Ouu。"
+      ],
+      secretMessages: [
+        "其實我想送你的，不只是花。",
+        "是希望你以後每一次看到花，都會想起今天。",
+        "願你的世界永遠溫柔，常有鮮花盛開 ✨",
+        "未來的每一個生日，我都想陪在妳身邊 ❤️"
+      ]
+    };
+
+    /* ========================================================
+       2. Web Audio 浪漫水晶風鈴合成器 (iOS Safari 免音效檔即開即聽)
+       ======================================================== */
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playCelestaChime() {
+      if (!audioCtx) return;
+      const notes = [1046.50, 1318.51, 1567.98, 1975.53, 2349.32]; // C6, E6, G6, B6, D7
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 1.8);
+        }, idx * 110);
+      });
+    }
+
+    /* ========================================================
+       3. 畫布與粒子系統
+       ======================================================== */
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 緩動函數
+    function easeOutCubic(t) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3); }
+    function easeOutBack(t, s = 1.2) {
+      t = Math.max(0, Math.min(1, t));
+      return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
+    }
+
+    // 粒子類別
+    class ParticleSystem {
+      constructor() {
+        this.stars = [];
+        this.sparkles = [];
+        this.petals = [];
+        this.initStars();
+      }
+      initStars() {
+        this.stars = [];
+        for (let i = 0; i < 45; i++) {
+          this.stars.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: 1.2 + Math.random() * 2.0,
+            speed: 1.2 + Math.random() * 2.0,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+      spawnSparkles(x, y, count = 15) {
+        for (let i = 0; i < count; i++) {
+          this.sparkles.push({
+            x: x + (Math.random() - 0.5) * 30,
+            y: y + (Math.random() - 0.5) * 30,
+            vx: (Math.random() - 0.5) * 60,
+            vy: -20 - Math.random() * 60,
+            size: 2 + Math.random() * 3,
+            life: 1.0,
+            decay: 0.4 + Math.random() * 0.4,
+            color: Math.random() > 0.5 ? '#ffe89c' : '#ffc4d6'
+          });
+        }
+      }
+      spawnPetal(x, y, count = 1) {
+        for (let i = 0; i < count; i++) {
+          this.petals.push({
+            x: x + (Math.random() - 0.5) * 40,
+            y: y + (Math.random() - 0.5) * 30,
+            vx: (Math.random() - 0.5) * 20,
+            vy: 25 + Math.random() * 45,
+            w: 12 + Math.random() * 6,
+            h: 16 + Math.random() * 8,
+            angle: Math.random() * Math.PI * 2,
+            angVel: (Math.random() - 0.5) * 2.5,
+            swaySpeed: 1.5 + Math.random() * 1.5,
+            swayAmp: 25 + Math.random() * 25,
+            swayPhase: Math.random() * Math.PI * 2,
+            color: Math.random() > 0.4 ? 'rgba(235, 38, 72, ' : 'rgba(255, 160, 185, ',
+            life: 1.0,
+            decay: 0.05 + Math.random() * 0.04
+          });
+        }
+      }
+      update(dt, time, allowAmbient, bCenter) {
+        // 星光微浮
+        this.stars.forEach(s => {
+          s.y -= 0.3 * dt * 60;
+          if (s.y < 0) s.y = height;
+        });
+        // 微光更新
+        this.sparkles.forEach(sp => {
+          sp.x += sp.vx * dt;
+          sp.y += sp.vy * dt;
+          sp.life -= sp.decay * dt;
+        });
+        this.sparkles = this.sparkles.filter(sp => sp.life > 0);
+
+        // 花瓣物理
+        this.petals.forEach(p => {
+          const sway = Math.sin(time * p.swaySpeed + p.swayPhase) * p.swayAmp * dt;
+          p.x += p.vx * dt + sway;
+          p.y += p.vy * dt;
+          p.angle += p.angVel * dt;
+          p.life -= p.decay * dt;
+        });
+        this.petals = this.petals.filter(p => p.life > 0 && p.y < height + 50);
+
+        if (allowAmbient && this.petals.length < 18 && Math.random() < 0.04) {
+          this.spawnPetal(bCenter.x + (Math.random() - 0.5) * 160, bCenter.y - 40);
+        }
+      }
+      render(ctx, time) {
+        // 1. 繪製星光
+        this.stars.forEach(s => {
+          const alpha = 0.3 + 0.4 * Math.sin(time * s.speed + s.phase);
+          ctx.fillStyle = `rgba(255, 245, 255, ${Math.max(0, alpha)})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        // 2. 繪製微光
+        this.sparkles.forEach(sp => {
+          ctx.fillStyle = sp.color;
+          ctx.globalAlpha = Math.max(0, sp.life);
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        // 3. 繪製飄落花瓣
+        this.petals.forEach(p => {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillStyle = p.color + Math.max(0, p.life * 0.9) + ')';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.w / 2, p.h / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    /* ========================================================
+       4. 花卉與花束幾何模型
+       ======================================================== */
+    class Flower {
+      constructor(opts) {
+        this.type = opts.type; // 'rose', 'tulip', 'daisy', 'babysbreath', 'foliage'
+        this.start = opts.start;
+        this.target = opts.target;
+        this.ctrl = opts.ctrl;
+        this.delay = opts.delay;
+        this.stemDur = opts.stemDur || 2.0;
+        this.bloomDur = opts.bloomDur || 2.4;
+        this.scale = opts.scale || 1.0;
+        this.color = opts.color || '#e62b4a';
+        this.coreColor = opts.coreColor || '#8a0d24';
+
+        this.stemProg = 0;
+        this.bloomProg = 0;
+        this.isBlooming = false;
+        this.isComplete = false;
+        this.soundPlayed = false;
+        this.swayPhase = (opts.target.x * 0.05) % (Math.PI * 2);
+      }
+      update(t, timeElapsed) {
+        const localT = t - this.delay;
+        if (localT < 0) {
+          this.stemProg = 0;
+          this.bloomProg = 0;
+          return;
+        }
+        if (localT <= this.stemDur) {
+          this.stemProg = easeOutCubic(localT / this.stemDur);
+          this.bloomProg = 0;
+        } else {
+          this.stemProg = 1.0;
+          const bT = localT - this.stemDur;
+          if (bT <= this.bloomDur) {
+            this.bloomProg = easeOutBack(bT / this.bloomDur, 1.2);
+            this.isBlooming = true;
+            this.isComplete = false;
+          } else {
+            this.bloomProg = 1.0;
+            this.isBlooming = true;
+            this.isComplete = true;
+          }
+        }
+      }
+      getHeadPos() {
+        const t = this.stemProg;
+        const p0 = this.start, p1 = this.ctrl, p2 = this.target;
+        const x = (1 - t)**2 * p0.x + 2 * (1 - t) * t * p1.x + t**2 * p2.x;
+        const y = (1 - t)**2 * p0.y + 2 * (1 - t) * t * p1.y + t**2 * p2.y;
+        return { x, y };
+      }
+      render(ctx, timeElapsed) {
+        if (this.stemProg <= 0.001) return;
+        const head = this.getHeadPos();
+        const sway = Math.sin(timeElapsed * 1.2 + this.swayPhase) * (2.2 * Math.PI / 180);
+
+        // 1. 繪製花莖
+        ctx.strokeStyle = '#2d5c38';
+        ctx.lineWidth = 2.4 * this.scale;
+        ctx.beginPath();
+        const p0 = this.start, p1 = this.ctrl;
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i <= 20; i++) {
+          const t = (i / 20) * this.stemProg;
+          const x = (1 - t)**2 * p0.x + 2 * (1 - t) * t * p1.x + t**2 * this.target.x;
+          const y = (1 - t)**2 * p0.y + 2 * (1 - t) * t * p1.y + t**2 * this.target.y;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // 2. 花頭
+        ctx.save();
+        ctx.translate(head.x, head.y);
+        ctx.rotate(sway);
+
+        const s = this.scale * Math.max(0.01, this.bloomProg);
+
+        if (this.type === 'rose') {
+          this.renderRose(ctx, s);
+        } else if (this.type === 'tulip') {
+          this.renderTulip(ctx, s);
+        } else if (this.type === 'daisy') {
+          this.renderDaisy(ctx, s);
+        } else if (this.type === 'babysbreath') {
+          this.renderBabysBreath(ctx, s, timeElapsed);
+        } else if (this.type === 'foliage') {
+          this.renderFoliage(ctx, s);
+        }
+        ctx.restore();
+      }
+
+      renderRose(ctx, s) {
+        if (!this.isBlooming) {
+          ctx.fillStyle = '#2d5c38';
+          ctx.beginPath(); ctx.ellipse(0, -4 * this.stemProg, 6, 12, 0, 0, Math.PI * 2); ctx.fill();
+          return;
+        }
+        // 外層花瓣 (5片)
+        ctx.fillStyle = this.color;
+        for (let i = 0; i < 5; i++) {
+          ctx.save();
+          ctx.rotate((Math.PI * 2 / 5) * i + this.bloomProg * 0.2);
+          ctx.beginPath();
+          ctx.ellipse(0, 14 * s, 13 * s, 16 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        // 中層花瓣 (5片)
+        ctx.fillStyle = this.color;
+        for (let i = 0; i < 5; i++) {
+          ctx.save();
+          ctx.rotate((Math.PI * 2 / 5) * i + Math.PI / 5 - this.bloomProg * 0.15);
+          ctx.beginPath();
+          ctx.ellipse(0, 8 * s, 10 * s, 13 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        // 內層花心
+        ctx.fillStyle = this.coreColor;
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate(i * 1.1 + this.bloomProg * 0.3);
+          ctx.beginPath();
+          ctx.ellipse(0, 2 * s, 7 * s * (1 - i * 0.15), 9 * s * (1 - i * 0.15), 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      renderTulip(ctx, s) {
+        if (!this.isBlooming) return;
+        ctx.fillStyle = this.color;
+        // 背景中央瓣
+        ctx.beginPath(); ctx.ellipse(0, 6 * s, 10 * s, 18 * s, 0, 0, Math.PI * 2); ctx.fill();
+        // 左右展開瓣
+        const spread = 0.1 + this.bloomProg * 0.25;
+        ctx.save(); ctx.rotate(-spread);
+        ctx.beginPath(); ctx.ellipse(-8 * s, 4 * s, 9 * s, 19 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.save(); ctx.rotate(spread);
+        ctx.beginPath(); ctx.ellipse(8 * s, 4 * s, 9 * s, 19 * s, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        // 前方主瓣
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.ellipse(0, 0, 11 * s, 17 * s, 0, 0, Math.PI * 2); ctx.fill();
+      }
+
+      renderDaisy(ctx, s) {
+        if (!this.isBlooming) return;
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 14; i++) {
+          ctx.save();
+          ctx.rotate((Math.PI * 2 / 14) * i + this.bloomProg * 0.2);
+          ctx.beginPath();
+          ctx.ellipse(0, 12 * s, 3.5 * s, 11 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        // 金黃花蕊
+        ctx.fillStyle = '#ffc83b';
+        ctx.beginPath(); ctx.arc(0, 0, 7 * s, 0, Math.PI * 2); ctx.fill();
+      }
+
+      renderBabysBreath(ctx, s, time) {
+        if (!this.isBlooming) return;
+        const florets = [
+          { x: 0, y: 16, c: '#fff7eb' }, { x: -14, y: 26, c: '#ffcde0' },
+          { x: 14, y: 24, c: '#fff7eb' }, { x: -24, y: 38, c: '#fff7eb' },
+          { x: 24, y: 36, c: '#ffcde0' }, { x: 0, y: 55, c: '#fff7eb' },
+          { x: -16, y: 50, c: '#ffcde0' }, { x: 16, y: 52, c: '#fff7eb' }
+        ];
+        ctx.strokeStyle = '#3d6e4a';
+        ctx.lineWidth = 1.2 * s;
+        florets.forEach(f => {
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(f.x * s, f.y * s);
+          ctx.stroke();
+
+          const twinkle = 0.85 + 0.25 * Math.sin(time * 3 + f.x);
+          ctx.fillStyle = f.c;
+          ctx.beginPath();
+          ctx.arc(f.x * s, f.y * s, 4 * s * twinkle, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      renderFoliage(ctx, s) {
+        if (!this.isBlooming) return;
+        ctx.fillStyle = '#497c55';
+        ctx.beginPath(); ctx.ellipse(0, 0, 8 * s, 14 * s, 0, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    /* ========================================================
+       5. 主舞台邏輯
+       ======================================================== */
+    const particles = new ParticleSystem();
+    let flowers = [];
+    let startTime = null;
+    let bouquetCenter = { x: width / 2, y: height * 0.55 };
+    let isBouquetComplete = false;
+    let textSequenceStarted = false;
+    let secretIndex = 0;
+
+    function buildBouquet() {
+      flowers = [];
+      const bx = width / 2;
+      const by = height * 0.78;
+      const s = Math.min(width / 420, height / 750);
+      bouquetCenter = { x: bx, y: by - 240 * s };
+
+      // 1. 主花 (第一朵紅玫瑰 - Stage 2 起生長)
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx, y: by - 240 * s },
+        ctrl: { x: bx - 15 * s, y: by - 120 * s }, delay: 1.2, stemDur: 2.2, bloomDur: 2.6,
+        scale: 1.2 * s, color: '#e62445', coreColor: '#8a0d24'
+      }));
+
+      // 2. 後景葉
+      flowers.unshift(new Flower({
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 110 * s, y: by - 250 * s },
+        ctrl: { x: bx - 80 * s, y: by - 100 * s }, delay: 4.8, scale: 1.0 * s
+      }));
+      flowers.unshift(new Flower({
+        type: 'foliage', start: { x: bx, y: by }, target: { x: bx + 115 * s, y: by - 245 * s },
+        ctrl: { x: bx + 80 * s, y: by - 100 * s }, delay: 5.0, scale: 1.0 * s
+      }));
+
+      // 3. 滿天星
+      flowers.push(new Flower({
+        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx - 90 * s, y: by - 290 * s },
+        ctrl: { x: bx - 60 * s, y: by - 140 * s }, delay: 5.4, scale: 0.95 * s
+      }));
+      flowers.push(new Flower({
+        type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx + 95 * s, y: by - 285 * s },
+        ctrl: { x: bx + 65 * s, y: by - 140 * s }, delay: 5.8, scale: 0.95 * s
+      }));
+
+      // 4. 鬱金香
+      flowers.push(new Flower({
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 55 * s, y: by - 300 * s },
+        ctrl: { x: bx - 35 * s, y: by - 150 * s }, delay: 6.2, scale: 1.05 * s, color: '#ff6b5e'
+      }));
+      flowers.push(new Flower({
+        type: 'tulip', start: { x: bx, y: by }, target: { x: bx + 55 * s, y: by - 290 * s },
+        ctrl: { x: bx + 35 * s, y: by - 150 * s }, delay: 6.6, scale: 1.0 * s, color: '#ffd65c'
+      }));
+
+      // 5. 雛菊
+      flowers.push(new Flower({
+        type: 'daisy', start: { x: bx, y: by }, target: { x: bx - 75 * s, y: by - 195 * s },
+        ctrl: { x: bx - 45 * s, y: by - 90 * s }, delay: 7.0, scale: 0.95 * s
+      }));
+      flowers.push(new Flower({
+        type: 'daisy', start: { x: bx, y: by }, target: { x: bx + 80 * s, y: by - 205 * s },
+        ctrl: { x: bx + 50 * s, y: by - 95 * s }, delay: 7.4, scale: 0.95 * s
+      }));
+
+      // 6. 前景伴生粉紅/香檳玫瑰
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx - 38 * s, y: by - 170 * s },
+        ctrl: { x: bx - 20 * s, y: by - 80 * s }, delay: 7.8, scale: 1.0 * s,
+        color: '#ff8ca8', coreColor: '#c93c66'
+      }));
+      flowers.push(new Flower({
+        type: 'rose', start: { x: bx, y: by }, target: { x: bx + 40 * s, y: by - 165 * s },
+        ctrl: { x: bx + 25 * s, y: by - 80 * s }, delay: 8.2, scale: 1.0 * s,
+        color: '#ffc9ba', coreColor: '#cf7563'
+      }));
+    }
+
+    function renderGlow(time, alpha) {
+      const grad = ctx.createRadialGradient(bouquetCenter.x, bouquetCenter.y, 10, bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.45);
+      const breath = 1.0 + 0.12 * Math.sin(time * 1.5);
+      grad.addColorStop(0, `rgba(255, 200, 220, ${0.35 * alpha * breath})`);
+      grad.addColorStop(0.5, `rgba(220, 150, 240, ${0.15 * alpha * breath})`);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bouquetCenter.x, bouquetCenter.y, Math.min(width, height) * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function renderWrapping(s, alpha) {
+      const bx = width / 2;
+      const by = height * 0.78;
+      ctx.save();
+      // 金色緞帶蝴蝶結
+      ctx.fillStyle = `rgba(245, 210, 140, ${alpha * 0.95})`;
+      ctx.beginPath();
+      ctx.ellipse(bx - 22 * s, by + 25 * s, 18 * s, 13 * s, 0, 0, Math.PI * 2);
+      ctx.ellipse(bx + 22 * s, by + 25 * s, 18 * s, 13 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(255, 230, 160, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(bx, by + 25 * s, 10 * s, 0, Math.PI * 2);
+      ctx.fill();
+      // 飄帶
+      ctx.strokeStyle = `rgba(245, 210, 140, ${alpha * 0.85})`;
+      ctx.lineWidth = 3.0 * s;
+      ctx.beginPath();
+      ctx.moveTo(bx - 5 * s, by + 25 * s);
+      ctx.quadraticCurveTo(bx - 18 * s, by + 50 * s, bx - 22 * s, by + 75 * s);
+      ctx.moveTo(bx + 5 * s, by + 25 * s);
+      ctx.quadraticCurveTo(bx + 18 * s, by + 50 * s, bx + 22 * s, by + 75 * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* ========================================================
+       6. 動畫迴圈
+       ======================================================== */
+    let lastTime = performance.now();
+    function animate(now) {
+      if (!startTime) startTime = now;
+      const timeElapsed = (now - startTime) / 1000;
+      const dt = Math.min(0.1, (now - lastTime) / 1000);
+      lastTime = now;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. 光暈
+      if (timeElapsed > 1.2) {
+        const glowAlpha = Math.min(1.0, (timeElapsed - 1.2) * 0.25);
+        renderGlow(timeElapsed, glowAlpha);
+      }
+
+      // 2. 花朵更新與音效
+      let allDone = true;
+      flowers.forEach(f => {
+        f.update(timeElapsed, timeElapsed);
+        if (f.isBlooming && !f.soundPlayed) {
+          f.soundPlayed = true;
+          playCelestaChime();
+          const head = f.getHeadPos();
+          particles.spawnSparkles(head.x, head.y, 14);
+        }
+        if (!f.isComplete) allDone = false;
+        f.render(ctx, timeElapsed);
+      });
+
+      // 3. 包裝緞帶
+      const s = Math.min(width / 420, height / 750);
+      if (timeElapsed > 3.2) {
+        renderWrapping(s, Math.min(1.0, (timeElapsed - 3.2) * 0.5));
+      }
+
+      // 4. 粒子更新與繪製
+      isBouquetComplete = allDone && timeElapsed > 10.0;
+      particles.update(dt, timeElapsed, isBouquetComplete, bouquetCenter);
+      particles.render(ctx, timeElapsed);
+
+      // 5. 文字觸發
+      if (isBouquetComplete && !textSequenceStarted) {
+        textSequenceStarted = true;
+        startTextSequence();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function startTextSequence() {
+      document.getElementById('title').textContent = CONFIG.birthdayMessages[0];
+      document.getElementById('subtitle').textContent = CONFIG.birthdayMessages[1];
+      document.getElementById('final-line').textContent = CONFIG.birthdayMessages[2];
+
+      setTimeout(() => document.getElementById('title').classList.add('visible'), 500);
+      setTimeout(() => document.getElementById('subtitle').classList.add('visible'), 2000);
+      setTimeout(() => document.getElementById('final-line').classList.add('visible'), 3600);
+      setTimeout(() => document.getElementById('hint').classList.add('visible'), 5200);
+      setTimeout(() => document.getElementById('replay-btn').classList.add('visible'), 6200);
+    }
+
+    /* ========================================================
+       7. 觸碰互動與彩蛋
+       ======================================================== */
+    function handleTouch(x, y) {
+      initAudio();
+      particles.spawnSparkles(x, y, 30);
+      particles.spawnPetal(x, y, 12);
+      playCelestaChime();
+
+      const secEl = document.getElementById('secret-message');
+      const hintEl = document.getElementById('hint');
+      hintEl.classList.remove('visible');
+
+      secEl.classList.remove('visible');
+      setTimeout(() => {
+        secEl.textContent = CONFIG.secretMessages[secretIndex % CONFIG.secretMessages.length];
+        secretIndex++;
+        secEl.classList.add('visible');
+      }, 150);
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.id === 'replay-btn') return;
+      handleTouch(e.clientX, e.clientY);
+    });
+
+    document.getElementById('replay-btn').addEventListener('click', () => {
+      startTime = null;
+      textSequenceStarted = false;
+      secretIndex = 0;
+      document.getElementById('title').classList.remove('visible');
+      document.getElementById('subtitle').classList.remove('visible');
+      document.getElementById('final-line').classList.remove('visible');
+      document.getElementById('secret-message').classList.remove('visible');
+      document.getElementById('hint').classList.remove('visible');
+      document.getElementById('replay-btn').classList.remove('visible');
+      buildBouquet();
+    });
+
+    // 初始化啟動
+    buildBouquet();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
