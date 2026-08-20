@@ -569,7 +569,6 @@
         const head = this.getHeadPos();
         const sway = Math.sin(timeElapsed * 1.2 + this.swayPhase) * (2.2 * Math.PI / 180);
 
-        // 花莖 (根部深藏於包裝紙內部)
         ctx.strokeStyle = '#2d5c38';
         ctx.lineWidth = (this.isHero ? 3.4 : 2.6) * this.scale;
         ctx.beginPath();
@@ -720,7 +719,7 @@
     }
 
     /* ========================================================
-       7. 豪華大花束編排 (花莖生於花束包裝內部)
+       7. 豪華大花束編排
        ======================================================== */
     const particles = new ParticleSystem();
     let flowers = [];
@@ -733,11 +732,10 @@
     function buildBouquet() {
       flowers = [];
       const bx = width / 2;
-      const by = height * 0.77; // 花束腰身收攏處
+      const by = height * 0.77;
       const s = Math.min(width / 390, height / 700) * 1.25;
       bouquetCenter = { x: bx, y: by - 250 * s };
 
-      // 後景綠葉
       flowers.push(new Flower({
         type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 145 * s, y: by - 260 * s },
         ctrl: { x: bx - 105 * s, y: by - 110 * s }, delay: 4.6, scale: 1.15 * s
@@ -755,7 +753,6 @@
         ctrl: { x: bx + 90 * s, y: by - 135 * s }, delay: 5.2, scale: 1.1 * s
       }));
 
-      // 滿天星
       flowers.push(new Flower({
         type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx - 110 * s, y: by - 350 * s },
         ctrl: { x: bx - 75 * s, y: by - 160 * s }, delay: 5.5, scale: 1.05 * s
@@ -769,7 +766,6 @@
         ctrl: { x: bx - 10 * s, y: by - 180 * s }, delay: 6.1, scale: 1.1 * s
       }));
 
-      // 鬱金香
       flowers.push(new Flower({
         type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 70 * s, y: by - 335 * s },
         ctrl: { x: bx - 45 * s, y: by - 165 * s }, delay: 6.4, scale: 1.15 * s, color: '#ff6252'
@@ -787,7 +783,6 @@
         ctrl: { x: bx + 25 * s, y: by - 145 * s }, delay: 7.2, scale: 1.1 * s, color: '#ff758f'
       }));
 
-      // 雛菊
       flowers.push(new Flower({
         type: 'daisy', start: { x: bx, y: by }, target: { x: bx - 95 * s, y: by - 230 * s },
         ctrl: { x: bx - 60 * s, y: by - 110 * s }, delay: 7.5, scale: 1.08 * s
@@ -797,7 +792,6 @@
         ctrl: { x: bx + 65 * s, y: by - 115 * s }, delay: 7.8, scale: 1.08 * s
       }));
 
-      // 兩朵伴生紅玫瑰
       flowers.push(new Flower({
         type: 'rose', start: { x: bx, y: by }, target: { x: bx - 42 * s, y: by - 250 * s },
         ctrl: { x: bx - 25 * s, y: by - 120 * s }, delay: 8.1, scale: 1.25 * s,
@@ -809,7 +803,6 @@
         color: '#dc1c3b', coreColor: '#7a081d'
       }));
 
-      // 前景玫瑰
       flowers.push(new Flower({
         type: 'rose', start: { x: bx, y: by }, target: { x: bx - 55 * s, y: by - 180 * s },
         ctrl: { x: bx - 30 * s, y: by - 85 * s }, delay: 8.7, scale: 1.15 * s,
@@ -821,7 +814,6 @@
         color: '#ffd0c2', coreColor: '#d67562'
       }));
 
-      // 主花大紅玫瑰
       flowers.push(new Flower({
         type: 'rose', start: { x: bx, y: by }, target: { x: bx, y: by - 240 * s },
         ctrl: { x: bx - 15 * s, y: by - 120 * s }, delay: 1.2, stemDur: 2.2, bloomDur: 2.7,
@@ -842,15 +834,15 @@
     }
 
     /* ========================================================
-       8. 精緻法式/韓式立體花束包裝紙 (Multi-Layered Bouquet Wrapping)
+       8. 法式柔霧淺色系花束包裝紙 (French Pastel Cream & Blush Wrap)
        ======================================================== */
     function renderBackWrapping(s, alpha) {
       const bx = width / 2;
       const by = height * 0.77;
       ctx.save();
 
-      // 1. 後層大扇形霧面花束紙 (深霧灰紫，襯托花群)
-      ctx.fillStyle = `rgba(28, 14, 38, ${alpha * 0.88})`;
+      // 1. 後層大扇形包裝紙 (法式柔霧燕麥奶白 / 淺粉香檳)
+      ctx.fillStyle = `rgba(246, 236, 230, ${alpha * 0.94})`;
       ctx.beginPath();
       ctx.moveTo(bx - 175 * s, by - 180 * s);
       ctx.lineTo(bx - 140 * s, by - 320 * s);
@@ -863,9 +855,9 @@
       ctx.closePath();
       ctx.fill();
 
-      // 2. 內層雪梨紙/白棉紙蕾絲邊緣 (French White Tissue Trim)
-      ctx.strokeStyle = `rgba(255, 240, 245, ${alpha * 0.45})`;
-      ctx.lineWidth = 2.0 * s;
+      // 2. 內層絲光白雪梨紙滾邊 (French Silk White Trim)
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.85})`;
+      ctx.lineWidth = 2.4 * s;
       ctx.beginPath();
       ctx.moveTo(bx - 165 * s, by - 170 * s);
       ctx.lineTo(bx - 132 * s, by - 305 * s);
@@ -873,6 +865,18 @@
       ctx.lineTo(bx + 35 * s, by - 355 * s);
       ctx.lineTo(bx + 132 * s, by - 305 * s);
       ctx.lineTo(bx + 165 * s, by - 170 * s);
+      ctx.stroke();
+
+      // 3. 香檳金細邊微光
+      ctx.strokeStyle = `rgba(225, 195, 150, ${alpha * 0.65})`;
+      ctx.lineWidth = 1.2 * s;
+      ctx.beginPath();
+      ctx.moveTo(bx - 175 * s, by - 180 * s);
+      ctx.lineTo(bx - 140 * s, by - 320 * s);
+      ctx.lineTo(bx - 40 * s, by - 370 * s);
+      ctx.lineTo(bx + 40 * s, by - 370 * s);
+      ctx.lineTo(bx + 140 * s, by - 320 * s);
+      ctx.lineTo(bx + 175 * s, by - 180 * s);
       ctx.stroke();
 
       ctx.restore();
@@ -883,8 +887,8 @@
       const by = height * 0.77;
       ctx.save();
 
-      // 1. 下半部錐形手握手柄包裝 (Tapered Bouquet Stem Wrap)
-      ctx.fillStyle = `rgba(22, 10, 30, ${alpha * 0.95})`;
+      // 1. 下半部錐形手握手柄包裝 (淺杏仁奶油色)
+      ctx.fillStyle = `rgba(242, 230, 222, ${alpha * 0.96})`;
       ctx.beginPath();
       ctx.moveTo(bx - 42 * s, by - 5 * s);
       ctx.lineTo(bx - 26 * s, by + 120 * s);
@@ -893,8 +897,8 @@
       ctx.closePath();
       ctx.fill();
 
-      // 手柄精緻陰影褶皺線
-      ctx.strokeStyle = `rgba(255, 220, 180, ${alpha * 0.25})`;
+      // 手柄精緻陰影摺皺
+      ctx.strokeStyle = `rgba(205, 185, 170, ${alpha * 0.45})`;
       ctx.lineWidth = 1.5 * s;
       ctx.beginPath();
       ctx.moveTo(bx - 8 * s, by + 10 * s);
@@ -903,9 +907,9 @@
       ctx.lineTo(bx + 4 * s, by + 115 * s);
       ctx.stroke();
 
-      // 2. 前層立體交叉斜角包裝紙 (Korean Style Overlapping Flaps)
-      // 左摺角
-      ctx.fillStyle = `rgba(38, 20, 52, ${alpha * 0.92})`;
+      // 2. 前層立體交叉斜角包裝紙 (淺粉白與柔霧杏粉交疊)
+      // 左摺角 (柔霧燕麥白)
+      ctx.fillStyle = `rgba(250, 242, 236, ${alpha * 0.95})`;
       ctx.beginPath();
       ctx.moveTo(bx - 145 * s, by - 100 * s);
       ctx.lineTo(bx - 110 * s, by + 10 * s);
@@ -914,8 +918,8 @@
       ctx.closePath();
       ctx.fill();
 
-      // 右摺角 (覆蓋於左摺角上，形成立體交疊感)
-      ctx.fillStyle = `rgba(48, 26, 65, ${alpha * 0.95})`;
+      // 右摺角 (微甜淡粉香檳，交疊覆蓋)
+      ctx.fillStyle = `rgba(244, 226, 222, ${alpha * 0.97})`;
       ctx.beginPath();
       ctx.moveTo(bx + 145 * s, by - 100 * s);
       ctx.lineTo(bx + 110 * s, by + 10 * s);
@@ -924,8 +928,8 @@
       ctx.closePath();
       ctx.fill();
 
-      // 包裝紙精美金邊輪廓線
-      ctx.strokeStyle = `rgba(245, 215, 160, ${alpha * 0.55})`;
+      // 溫柔玫瑰金 / 香檳金摺邊輪廓線
+      ctx.strokeStyle = `rgba(215, 175, 140, ${alpha * 0.75})`;
       ctx.lineWidth = 1.8 * s;
       ctx.beginPath();
       ctx.moveTo(bx - 145 * s, by - 100 * s);
@@ -934,9 +938,9 @@
       ctx.lineTo(bx - 25 * s, by + 30 * s);
       ctx.stroke();
 
-      // 3. 金絲緞帶蝴蝶結 (Satin Gold Ribbon Bow)
+      // 3. 玫瑰金絲緞帶蝴蝶結 (Rose Gold & Champagne Satin Ribbon)
       const knotY = by + 20 * s;
-      ctx.fillStyle = `rgba(250, 215, 140, ${alpha * 0.96})`;
+      ctx.fillStyle = `rgba(242, 148, 168, ${alpha * 0.96})`; // 溫柔玫瑰粉金
       // 蝴蝶結左環
       ctx.beginPath();
       ctx.ellipse(bx - 28 * s, knotY - 4 * s, 24 * s, 16 * s, -0.2, 0, Math.PI * 2);
@@ -946,14 +950,14 @@
       ctx.ellipse(bx + 28 * s, knotY - 4 * s, 24 * s, 16 * s, 0.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // 蝴蝶結中央金球結
-      ctx.fillStyle = `rgba(255, 235, 175, ${alpha})`;
+      // 蝴蝶結中央金粉光澤結
+      ctx.fillStyle = `rgba(255, 205, 218, ${alpha})`;
       ctx.beginPath();
       ctx.arc(bx, knotY, 13 * s, 0, Math.PI * 2);
       ctx.fill();
 
-      // 飄逸垂落金絲緞帶 (Flowing Ribbons)
-      ctx.strokeStyle = `rgba(245, 215, 140, ${alpha * 0.9})`;
+      // 垂落飄逸緞帶
+      ctx.strokeStyle = `rgba(238, 142, 162, ${alpha * 0.9})`;
       ctx.lineWidth = 3.8 * s;
       ctx.beginPath();
       ctx.moveTo(bx - 6 * s, knotY + 5 * s);
@@ -989,7 +993,7 @@
 
       const s = Math.min(width / 390, height / 700) * 1.25;
 
-      // 3. 後層花束包裝紙 (在花朵背後優雅展開)
+      // 3. 後層法式淺色包裝紙 (優雅展開)
       if (timeElapsed > 1.8) {
         renderBackWrapping(s, Math.min(1.0, (timeElapsed - 1.8) * 0.6));
       }
@@ -1008,7 +1012,7 @@
         f.render(ctx, timeElapsed);
       });
 
-      // 5. 前層立體交叉包裝紙與金色緞帶蝴蝶結 (將花束根部完全包覆)
+      // 5. 前層法式立體淺色交叉包裝紙與玫瑰金緞帶
       if (timeElapsed > 2.2) {
         renderFrontWrapping(s, Math.min(1.0, (timeElapsed - 2.2) * 0.7));
       }
