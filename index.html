@@ -44,15 +44,19 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
+      padding: env(safe-area-inset-top, 24px) 16px env(safe-area-inset-bottom, 24px) 16px;
     }
     .text-top {
-      margin-top: 30px;
+      margin-top: 24px;
       text-align: center;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
     .title {
-      font-size: 27px;
+      font-size: 26px;
       font-weight: 700;
       color: #ffe6a3;
       text-shadow: 0 0 18px rgba(255, 230, 163, 0.75), 0 0 35px rgba(255, 180, 120, 0.45);
@@ -62,27 +66,27 @@
       letter-spacing: 1px;
     }
     .subtitle {
-      font-size: 15px;
+      font-size: 14.5px;
       color: #f2e9fc;
       text-shadow: 0 0 12px rgba(242, 233, 252, 0.6);
       opacity: 0;
-      margin-top: 8px;
+      transform: translateY(-6px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+      letter-spacing: 0.5px;
+      line-height: 1.4;
+    }
+    .final-line {
+      font-size: 15.5px;
+      color: #ffc4d6;
+      text-shadow: 0 0 14px rgba(255, 196, 214, 0.75);
+      opacity: 0;
+      font-weight: 600;
       transform: translateY(-6px);
       transition: opacity 1.8s ease, transform 1.8s ease;
       letter-spacing: 0.5px;
     }
-    .final-line {
-      font-size: 16px;
-      color: #ffc4d6;
-      text-shadow: 0 0 14px rgba(255, 196, 214, 0.7);
-      opacity: 0;
-      margin-top: 8px;
-      font-weight: 600;
-      transform: translateY(-6px);
-      transition: opacity 1.8s ease, transform 1.8s ease;
-    }
     .text-bottom {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       text-align: center;
       width: 100%;
       display: flex;
@@ -90,15 +94,16 @@
       align-items: center;
     }
     .secret-message {
-      font-size: 15px;
+      font-size: 14.5px;
       color: #ffe6a3;
-      text-shadow: 0 0 15px rgba(255, 230, 163, 0.8);
-      min-height: 24px;
+      text-shadow: 0 0 15px rgba(255, 230, 163, 0.85);
+      min-height: 42px;
       opacity: 0;
       transition: opacity 0.8s ease;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       padding: 0 15px;
-      line-height: 1.5;
+      line-height: 1.45;
+      max-width: 340px;
     }
     .hint {
       font-size: 12px;
@@ -106,14 +111,14 @@
       letter-spacing: 1px;
       opacity: 0;
       transition: opacity 1.2s ease;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .replay-btn {
       pointer-events: auto;
-      background: rgba(35, 18, 50, 0.6);
+      background: rgba(35, 18, 50, 0.65);
       border: 1px solid rgba(255, 220, 150, 0.7);
       color: #ffeedb;
-      padding: 8px 24px;
+      padding: 7px 22px;
       border-radius: 20px;
       font-size: 13px;
       cursor: pointer;
@@ -125,7 +130,7 @@
     }
     .replay-btn:active {
       transform: scale(0.95);
-      background: rgba(60, 30, 85, 0.8);
+      background: rgba(60, 30, 85, 0.85);
     }
     .visible {
       opacity: 1 !important;
@@ -138,11 +143,7 @@
   <canvas id="stage"></canvas>
 
   <div id="ui-container">
-    <div class="text-top">
-      <div id="title" class="title">Happy Birthday ❤️</div>
-      <div id="subtitle" class="subtitle">願你的每一天，都像今天一樣閃閃發光。</div>
-      <div id="final-line" class="final-line">生日快樂，我最喜歡的女孩。</div>
-    </div>
+    <div class="text-top"></div>
 
     <div class="text-bottom">
       <div id="secret-message" class="secret-message"></div>
@@ -161,7 +162,7 @@
         "Ouu大寶寶生日大快樂！",
         "有妳的每一天都好開心❤️",
         "我們要一起去給我的照片上的所有地方喔~",
-        "希望妳的每一天都像今天一樣閃閃發光 ✨",
+        "希望妳的每一天都像今天一樣閃閃發光 ✨"
       ],
       secretMessages: [
         "這次送妳很特別的花，我們以後都要當很厲害的工程師！✨",
@@ -834,14 +835,14 @@
     }
 
     /* ========================================================
-       8. 法式柔霧淺色系花束包裝紙 (French Pastel Cream & Blush Wrap)
+       8. 法式柔霧淺色系花束包裝紙
        ======================================================== */
     function renderBackWrapping(s, alpha) {
       const bx = width / 2;
       const by = height * 0.77;
       ctx.save();
 
-      // 1. 後層大扇形包裝紙 (法式柔霧燕麥奶白 / 淺粉香檳)
+      // 1. 後層大扇形包裝紙 (法式柔霧燕麥奶白)
       ctx.fillStyle = `rgba(246, 236, 230, ${alpha * 0.94})`;
       ctx.beginPath();
       ctx.moveTo(bx - 175 * s, by - 180 * s);
@@ -855,7 +856,7 @@
       ctx.closePath();
       ctx.fill();
 
-      // 2. 內層絲光白雪梨紙滾邊 (French Silk White Trim)
+      // 2. 內層絲光白雪梨紙滾邊
       ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.85})`;
       ctx.lineWidth = 2.4 * s;
       ctx.beginPath();
@@ -907,8 +908,7 @@
       ctx.lineTo(bx + 4 * s, by + 115 * s);
       ctx.stroke();
 
-      // 2. 前層立體交叉斜角包裝紙 (淺粉白與柔霧杏粉交疊)
-      // 左摺角 (柔霧燕麥白)
+      // 2. 前層立體交叉斜角包裝紙 (淺燕麥白與柔霧杏粉交疊)
       ctx.fillStyle = `rgba(250, 242, 236, ${alpha * 0.95})`;
       ctx.beginPath();
       ctx.moveTo(bx - 145 * s, by - 100 * s);
@@ -918,7 +918,6 @@
       ctx.closePath();
       ctx.fill();
 
-      // 右摺角 (微甜淡粉香檳，交疊覆蓋)
       ctx.fillStyle = `rgba(244, 226, 222, ${alpha * 0.97})`;
       ctx.beginPath();
       ctx.moveTo(bx + 145 * s, by - 100 * s);
@@ -938,19 +937,16 @@
       ctx.lineTo(bx - 25 * s, by + 30 * s);
       ctx.stroke();
 
-      // 3. 玫瑰金絲緞帶蝴蝶結 (Rose Gold & Champagne Satin Ribbon)
+      // 3. 玫瑰金絲緞帶蝴蝶結
       const knotY = by + 20 * s;
-      ctx.fillStyle = `rgba(242, 148, 168, ${alpha * 0.96})`; // 溫柔玫瑰粉金
-      // 蝴蝶結左環
+      ctx.fillStyle = `rgba(242, 148, 168, ${alpha * 0.96})`;
       ctx.beginPath();
       ctx.ellipse(bx - 28 * s, knotY - 4 * s, 24 * s, 16 * s, -0.2, 0, Math.PI * 2);
       ctx.fill();
-      // 蝴蝶結右環
       ctx.beginPath();
       ctx.ellipse(bx + 28 * s, knotY - 4 * s, 24 * s, 16 * s, 0.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // 蝴蝶結中央金粉光澤結
       ctx.fillStyle = `rgba(255, 205, 218, ${alpha})`;
       ctx.beginPath();
       ctx.arc(bx, knotY, 13 * s, 0, Math.PI * 2);
@@ -993,12 +989,10 @@
 
       const s = Math.min(width / 390, height / 700) * 1.25;
 
-      // 3. 後層法式淺色包裝紙 (優雅展開)
       if (timeElapsed > 1.8) {
         renderBackWrapping(s, Math.min(1.0, (timeElapsed - 1.8) * 0.6));
       }
 
-      // 4. 花朵生長與綻放
       let allDone = true;
       flowers.forEach(f => {
         f.update(timeElapsed, timeElapsed);
@@ -1012,16 +1006,13 @@
         f.render(ctx, timeElapsed);
       });
 
-      // 5. 前層法式立體淺色交叉包裝紙與玫瑰金緞帶
       if (timeElapsed > 2.2) {
         renderFrontWrapping(s, Math.min(1.0, (timeElapsed - 2.2) * 0.7));
       }
 
-      // 6. 前景粒子：花開微光與飄落花瓣
       isBouquetComplete = allDone && timeElapsed > 10.5;
       particles.renderForeground(ctx, timeElapsed);
 
-      // 7. 文字觸發
       if (isBouquetComplete && !textSequenceStarted) {
         textSequenceStarted = true;
         startTextSequence();
@@ -1031,15 +1022,27 @@
     }
 
     function startTextSequence() {
-      document.getElementById('title').textContent = CONFIG.birthdayMessages[0];
-      document.getElementById('subtitle').textContent = CONFIG.birthdayMessages[1];
-      document.getElementById('final-line').textContent = CONFIG.birthdayMessages[2];
+      const topContainer = document.querySelector('.text-top');
+      topContainer.innerHTML = '';
 
-      setTimeout(() => document.getElementById('title').classList.add('visible'), 500);
-      setTimeout(() => document.getElementById('subtitle').classList.add('visible'), 2000);
-      setTimeout(() => document.getElementById('final-line').classList.add('visible'), 3600);
-      setTimeout(() => document.getElementById('hint').classList.add('visible'), 5200);
-      setTimeout(() => document.getElementById('replay-btn').classList.add('visible'), 6200);
+      CONFIG.birthdayMessages.forEach((msg, idx) => {
+        const el = document.createElement('div');
+        if (idx === 0) {
+          el.className = 'title';
+        } else if (idx === CONFIG.birthdayMessages.length - 1) {
+          el.className = 'final-line';
+        } else {
+          el.className = 'subtitle';
+        }
+        el.textContent = msg;
+        topContainer.appendChild(el);
+
+        setTimeout(() => el.classList.add('visible'), 500 + idx * 1300);
+      });
+
+      const totalDelay = 500 + CONFIG.birthdayMessages.length * 1300;
+      setTimeout(() => document.getElementById('hint').classList.add('visible'), totalDelay + 800);
+      setTimeout(() => document.getElementById('replay-btn').classList.add('visible'), totalDelay + 1800);
     }
 
     /* ========================================================
@@ -1072,9 +1075,7 @@
       startTime = null;
       textSequenceStarted = false;
       secretIndex = 0;
-      document.getElementById('title').classList.remove('visible');
-      document.getElementById('subtitle').classList.remove('visible');
-      document.getElementById('final-line').classList.remove('visible');
+      document.querySelector('.text-top').querySelectorAll('div').forEach(el => el.classList.remove('visible'));
       document.getElementById('secret-message').classList.remove('visible');
       document.getElementById('hint').classList.remove('visible');
       document.getElementById('replay-btn').classList.remove('visible');
