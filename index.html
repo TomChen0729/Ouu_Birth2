@@ -228,6 +228,21 @@
       img.onload = () => loadedImages.push(img);
     });
 
+    // 避免重複：洗牌輪播卡池 (Shuffled Photo Pool)
+    let photoIndexQueue = [];
+    function getNextPhotoIndex() {
+      if (photoIndexQueue.length === 0) {
+        // 重新填滿 0 ~ 4 並隨機洗牌
+        const indices = [0, 1, 2, 3, 4];
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        photoIndexQueue = indices;
+      }
+      return photoIndexQueue.pop();
+    }
+
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
@@ -247,36 +262,47 @@
     }
 
     /* ========================================================
-       4. 拍立得照片掉落粒子 (Floating Polaroid Memories)
+       4. 拍立得照片掉落粒子 (速度適度加快 + 輪播均勻防重複)
        ======================================================== */
     class FloatingPhoto {
-      constructor(isInitial = false) {
-        this.reset(isInitial);
+      constructor(slotIndex, totalSlots) {
+        this.slotIndex = slotIndex;
+        this.totalSlots = totalSlots;
+        this.reset(true);
       }
 
       reset(isInitial = false) {
-        this.img = loadedImages.length > 0
-          ? loadedImages[Math.floor(Math.random() * loadedImages.length)]
-          : null;
+        this.photoIdx = getNextPhotoIndex();
         
-        const baseWidth = Math.min(width, height) * (0.22 + Math.random() * 0.08);
+        const baseWidth = Math.min(width, height) * (0.24 + Math.random() * 0.06);
         this.w = baseWidth;
-        this.h = baseWidth * 1.25; // 拍立得直式比例
+        this.h = baseWidth * 1.26;
 
-        this.x = Math.random() * (width - this.w * 0.6);
-        // 初始生成隨機分佈整個畫面，之後重置於螢幕頂端上方
-        this.y = isInitial ? Math.random() * height - this.h : -this.h - (Math.random() * 120);
+        // 水平分區，避免照片擠在同一個位置
+        const laneWidth = width / this.totalSlots;
+        const laneX = this.slotIndex * laneWidth;
+        this.x = laneX + Math.random() * (laneWidth - this.w * 0.7);
+        this.x = Math.max(10, Math.min(width - this.w - 10, this.x));
 
-        this.vy = 22 + Math.random() * 18; // 輕柔下落速度
-        this.vx = (Math.random() - 0.5) * 6;
+        // 垂直交錯分佈，初次啟動時均勻分散在各高度
+        if (isInitial) {
+          const stepY = height / this.totalSlots;
+          this.y = this.slotIndex * stepY - Math.random() * 80;
+        } else {
+          this.y = -this.h - (Math.random() * 80);
+        }
 
-        this.angle = (Math.random() - 0.5) * 0.4;
-        this.angVel = (Math.random() - 0.5) * 0.08;
-        this.swaySpeed = 0.8 + Math.random() * 0.8;
-        this.swayAmp = 18 + Math.random() * 20;
+        // 速度調整：加快一點點 (約 42 ~ 65 px/s，更生動順暢)
+        this.vy = 42 + Math.random() * 24;
+        this.vx = (Math.random() - 0.5) * 8;
+
+        this.angle = (Math.random() - 0.5) * 0.35;
+        this.angVel = (Math.random() - 0.5) * 0.12;
+        this.swaySpeed = 1.1 + Math.random() * 0.8;
+        this.swayAmp = 22 + Math.random() * 18;
         this.swayPhase = Math.random() * Math.PI * 2;
 
-        this.opacity = 0.72 + Math.random() * 0.18; // 夢幻半透明感
+        this.opacity = 0.78 + Math.random() * 0.16;
       }
 
       update(dt, time) {
@@ -285,17 +311,19 @@
         this.y += this.vy * dt;
         this.angle += this.angVel * dt;
 
-        // 當相片掉出螢幕底部時，自動重新從上方落下 (無限循環)
-        if (this.y > height + 40) {
+        // 掉落出底部後重置到頂端 (換下一張不同照片)
+        if (this.y > height + 50) {
           this.reset(false);
         }
       }
 
       render(ctx) {
-        if (!this.img || !this.img.complete || this.img.naturalWidth === 0) {
-          if (loadedImages.length > 0) {
-            this.img = loadedImages[Math.floor(Math.random() * loadedImages.length)];
-          }
+        let img = null;
+        if (loadedImages.length > 0) {
+          img = loadedImages[this.photoIdx % loadedImages.length];
+        }
+
+        if (!img || !img.complete || img.naturalWidth === 0) {
           return;
         }
 
@@ -304,55 +332,53 @@
         ctx.rotate(this.angle);
         ctx.globalAlpha = this.opacity;
 
-        // 柔和外陰影與光暈
-        ctx.shadowColor = 'rgba(255, 220, 180, 0.35)';
-        ctx.shadowBlur = 14;
+        // 柔和外陰影與微光
+        ctx.shadowColor = 'rgba(255, 215, 180, 0.38)';
+        ctx.shadowBlur = 15;
         ctx.shadowOffsetY = 6;
 
-        // 拍立得白色卡紙相框
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        // 拍立得相框
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
         const padX = this.w * 0.07;
         const padTop = this.w * 0.07;
         const padBottom = this.w * 0.22;
         const photoW = this.w - padX * 2;
         const photoH = this.h - padTop - padBottom;
 
-        // 圓角拍立得邊框
         this._roundRect(ctx, -this.w / 2, -this.h / 2, this.w, this.h, 8);
         ctx.fill();
 
-        // 關閉 shadow 以免影響照片內部
         ctx.shadowColor = 'transparent';
 
-        // 繪製照片本體 (保持比例裁剪置中)
+        // 繪製照片
         ctx.save();
         ctx.beginPath();
         this._roundRect(ctx, -this.w / 2 + padX, -this.h / 2 + padTop, photoW, photoH, 4);
         ctx.clip();
 
-        const imgAspect = this.img.naturalWidth / this.img.naturalHeight;
+        const imgAspect = img.naturalWidth / img.naturalHeight;
         const targetAspect = photoW / photoH;
         let sx, sy, sWidth, sHeight;
         if (imgAspect > targetAspect) {
-          sHeight = this.img.naturalHeight;
+          sHeight = img.naturalHeight;
           sWidth = sHeight * targetAspect;
-          sx = (this.img.naturalWidth - sWidth) / 2;
+          sx = (img.naturalWidth - sWidth) / 2;
           sy = 0;
         } else {
-          sWidth = this.img.naturalWidth;
+          sWidth = img.naturalWidth;
           sHeight = sWidth / targetAspect;
           sx = 0;
-          sy = (this.img.naturalHeight - sHeight) / 2;
+          sy = (img.naturalHeight - sHeight) / 2;
         }
 
-        ctx.drawImage(this.img, sx, sy, sWidth, sHeight, -this.w / 2 + padX, -this.h / 2 + padTop, photoW, photoH);
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, -this.w / 2 + padX, -this.h / 2 + padTop, photoW, photoH);
         ctx.restore();
 
-        // 拍立得底部手寫愛心點綴
-        ctx.fillStyle = 'rgba(235, 90, 120, 0.75)';
+        // 底部愛心手寫字
+        ctx.fillStyle = 'rgba(235, 80, 115, 0.8)';
         ctx.font = `bold ${Math.max(9, this.w * 0.11)}px -apple-system, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText('❤️ memories', 0, this.h / 2 - padBottom * 0.28);
+        ctx.fillText('❤️ sweet memory', 0, this.h / 2 - padBottom * 0.28);
 
         ctx.restore();
       }
@@ -373,7 +399,7 @@
     }
 
     /* ========================================================
-       5. 粒子系統 (星光、微光、花瓣與照片背景)
+       5. 粒子系統
        ======================================================== */
     class ParticleSystem {
       constructor() {
@@ -397,11 +423,10 @@
         }
       }
       initPhotos() {
-        // 同時飄落 4 ~ 6 張拍立得照片
         this.photos = [];
-        const photoCount = 5;
+        const photoCount = 5; // 5 張照片各配置一個均勻通道
         for (let i = 0; i < photoCount; i++) {
-          this.photos.push(new FloatingPhoto(true));
+          this.photos.push(new FloatingPhoto(i, photoCount));
         }
       }
       spawnSparkles(x, y, count = 15) {
@@ -439,15 +464,11 @@
         }
       }
       update(dt, time, allowAmbient, bCenter) {
-        // 更新背景漂浮照片
         this.photos.forEach(p => p.update(dt, time));
-
-        // 星光微浮
         this.stars.forEach(s => {
           s.y -= 0.3 * dt * 60;
           if (s.y < 0) s.y = height;
         });
-        // 微光更新
         this.sparkles.forEach(sp => {
           sp.x += sp.vx * dt;
           sp.y += sp.vy * dt;
@@ -455,7 +476,6 @@
         });
         this.sparkles = this.sparkles.filter(sp => sp.life > 0);
 
-        // 花瓣物理
         this.petals.forEach(p => {
           const sway = Math.sin(time * p.swaySpeed + p.swayPhase) * p.swayAmp * dt;
           p.x += p.vx * dt + sway;
@@ -470,7 +490,6 @@
         }
       }
       renderBackground(ctx, time) {
-        // 1. 繪製星光
         this.stars.forEach(s => {
           const alpha = 0.3 + 0.4 * Math.sin(time * s.speed + s.phase);
           ctx.fillStyle = `rgba(255, 245, 255, ${Math.max(0, alpha)})`;
@@ -478,12 +497,9 @@
           ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
           ctx.fill();
         });
-
-        // 2. 繪製背景飄落拍立得照片 (在花束背後，營造回憶浪漫景深)
         this.photos.forEach(p => p.render(ctx));
       }
       renderForeground(ctx, time) {
-        // 3. 繪製微光
         this.sparkles.forEach(sp => {
           ctx.fillStyle = sp.color;
           ctx.globalAlpha = Math.max(0, sp.life);
@@ -491,7 +507,6 @@
           ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
           ctx.fill();
         });
-        // 4. 繪製飄落花瓣
         this.petals.forEach(p => {
           ctx.save();
           ctx.translate(p.x, p.y);
@@ -507,7 +522,7 @@
     }
 
     /* ========================================================
-       6. 花卉與花束幾何模型
+       6. 花卉幾何模型
        ======================================================== */
     class Flower {
       constructor(opts) {
@@ -565,7 +580,6 @@
         const head = this.getHeadPos();
         const sway = Math.sin(timeElapsed * 1.2 + this.swayPhase) * (2.2 * Math.PI / 180);
 
-        // 1. 花莖
         ctx.strokeStyle = '#2d5c38';
         ctx.lineWidth = 2.4 * this.scale;
         ctx.beginPath();
@@ -579,7 +593,6 @@
         }
         ctx.stroke();
 
-        // 2. 花頭
         ctx.save();
         ctx.translate(head.x, head.y);
         ctx.rotate(sway);
@@ -606,7 +619,6 @@
           ctx.beginPath(); ctx.ellipse(0, -4 * this.stemProg, 6, 12, 0, 0, Math.PI * 2); ctx.fill();
           return;
         }
-        // 外層花瓣
         ctx.fillStyle = this.color;
         for (let i = 0; i < 5; i++) {
           ctx.save();
@@ -616,7 +628,6 @@
           ctx.fill();
           ctx.restore();
         }
-        // 中層花瓣
         ctx.fillStyle = this.color;
         for (let i = 0; i < 5; i++) {
           ctx.save();
@@ -626,7 +637,6 @@
           ctx.fill();
           ctx.restore();
         }
-        // 內層花心
         ctx.fillStyle = this.coreColor;
         for (let i = 0; i < 4; i++) {
           ctx.save();
@@ -717,14 +727,12 @@
       const s = Math.min(width / 420, height / 750);
       bouquetCenter = { x: bx, y: by - 240 * s };
 
-      // 1. 主花 (第一朵紅玫瑰 - Stage 2 起生長)
       flowers.push(new Flower({
         type: 'rose', start: { x: bx, y: by }, target: { x: bx, y: by - 240 * s },
         ctrl: { x: bx - 15 * s, y: by - 120 * s }, delay: 1.2, stemDur: 2.2, bloomDur: 2.6,
         scale: 1.2 * s, color: '#e62445', coreColor: '#8a0d24'
       }));
 
-      // 2. 後景葉
       flowers.unshift(new Flower({
         type: 'foliage', start: { x: bx, y: by }, target: { x: bx - 110 * s, y: by - 250 * s },
         ctrl: { x: bx - 80 * s, y: by - 100 * s }, delay: 4.8, scale: 1.0 * s
@@ -734,7 +742,6 @@
         ctrl: { x: bx + 80 * s, y: by - 100 * s }, delay: 5.0, scale: 1.0 * s
       }));
 
-      // 3. 滿天星
       flowers.push(new Flower({
         type: 'babysbreath', start: { x: bx, y: by }, target: { x: bx - 90 * s, y: by - 290 * s },
         ctrl: { x: bx - 60 * s, y: by - 140 * s }, delay: 5.4, scale: 0.95 * s
@@ -744,7 +751,6 @@
         ctrl: { x: bx + 65 * s, y: by - 140 * s }, delay: 5.8, scale: 0.95 * s
       }));
 
-      // 4. 鬱金香
       flowers.push(new Flower({
         type: 'tulip', start: { x: bx, y: by }, target: { x: bx - 55 * s, y: by - 300 * s },
         ctrl: { x: bx - 35 * s, y: by - 150 * s }, delay: 6.2, scale: 1.05 * s, color: '#ff6b5e'
@@ -754,7 +760,6 @@
         ctrl: { x: bx + 35 * s, y: by - 150 * s }, delay: 6.6, scale: 1.0 * s, color: '#ffd65c'
       }));
 
-      // 5. 雛菊
       flowers.push(new Flower({
         type: 'daisy', start: { x: bx, y: by }, target: { x: bx - 75 * s, y: by - 195 * s },
         ctrl: { x: bx - 45 * s, y: by - 90 * s }, delay: 7.0, scale: 0.95 * s
@@ -764,7 +769,6 @@
         ctrl: { x: bx + 50 * s, y: by - 95 * s }, delay: 7.4, scale: 0.95 * s
       }));
 
-      // 6. 前景伴生粉紅/香檳玫瑰
       flowers.push(new Flower({
         type: 'rose', start: { x: bx, y: by }, target: { x: bx - 38 * s, y: by - 170 * s },
         ctrl: { x: bx - 20 * s, y: by - 80 * s }, delay: 7.8, scale: 1.0 * s,
@@ -793,7 +797,6 @@
       const bx = width / 2;
       const by = height * 0.78;
       ctx.save();
-      // 金色緞帶蝴蝶結
       ctx.fillStyle = `rgba(245, 210, 140, ${alpha * 0.95})`;
       ctx.beginPath();
       ctx.ellipse(bx - 22 * s, by + 25 * s, 18 * s, 13 * s, 0, 0, Math.PI * 2);
@@ -803,7 +806,6 @@
       ctx.beginPath();
       ctx.arc(bx, by + 25 * s, 10 * s, 0, Math.PI * 2);
       ctx.fill();
-      // 飄帶
       ctx.strokeStyle = `rgba(245, 210, 140, ${alpha * 0.85})`;
       ctx.lineWidth = 3.0 * s;
       ctx.beginPath();
@@ -827,17 +829,14 @@
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. 背景層：星光與飄落回憶照片
       particles.update(dt, timeElapsed, isBouquetComplete, bouquetCenter);
       particles.renderBackground(ctx, timeElapsed);
 
-      // 2. 呼吸光暈
       if (timeElapsed > 1.2) {
         const glowAlpha = Math.min(1.0, (timeElapsed - 1.2) * 0.25);
         renderGlow(timeElapsed, glowAlpha);
       }
 
-      // 3. 花朵更新與音效
       let allDone = true;
       flowers.forEach(f => {
         f.update(timeElapsed, timeElapsed);
@@ -851,17 +850,14 @@
         f.render(ctx, timeElapsed);
       });
 
-      // 4. 包裝緞帶
       const s = Math.min(width / 420, height / 750);
       if (timeElapsed > 3.2) {
         renderWrapping(s, Math.min(1.0, (timeElapsed - 3.2) * 0.5));
       }
 
-      // 5. 前景粒子：花開微光與飄落花瓣
       isBouquetComplete = allDone && timeElapsed > 10.0;
       particles.renderForeground(ctx, timeElapsed);
 
-      // 6. 文字觸發
       if (isBouquetComplete && !textSequenceStarted) {
         textSequenceStarted = true;
         startTextSequence();
@@ -921,7 +917,6 @@
       buildBouquet();
     });
 
-    // 初始化啟動
     buildBouquet();
     requestAnimationFrame(animate);
   </script>
